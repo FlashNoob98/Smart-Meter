@@ -16,3 +16,4 @@ Drivers/
 STM32F303VCTX_FLASH.ld
 Smart_meter Debug.launch
 Smart_meter.ioc
+Smart-Meter.ioc
