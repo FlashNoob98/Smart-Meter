@@ -1,0 +1,18 @@
+.cproject
+.mxproject
+.project
+.settings/
+Core/Inc/main.h
+Core/Inc/stm32f3xx_hal_conf.h
+Core/Inc/stm32f3xx_it.h
+Core/Src/stm32f3xx_hal_msp.c
+Core/Src/stm32f3xx_it.c
+Core/Src/syscalls.c
+Core/Src/sysmem.c
+Core/Src/system_stm32f3xx.c
+Core/Startup/
+Debug/
+Drivers/
+STM32F303VCTX_FLASH.ld
+Smart_meter Debug.launch
+Smart_meter.ioc
