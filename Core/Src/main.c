@@ -83,7 +83,7 @@ int main(void){
 	float dx = (float)(2*M_PI/Npp);
 
 	for (int i=0; i<Npp; i++){
-		y[i] = (unsigned int)(2048+(2048*sinf(x)));
+		y[i] = (unsigned int)(2048+(2047*sinf(x)));
 		x = x + dx;
 		//DAC1->DACC1DHRR1 = y[i];
 	}//END FOR
