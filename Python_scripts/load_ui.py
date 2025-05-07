@@ -44,12 +44,15 @@ class MainUI(QMainWindow):
 
     def Acquire(self):
         if ui.PortSelect.currentText() == "Select Port":
-            QMessageBox.warning(self,"Port Error","Device not selected")
+            QMessageBox.warning(self," ","Warning: Device not selected")
             #print("Select a port")
         else:
-            serial = Serial_reader(ui.PortSelect.currentData(),int(self.BaudLineEdit.text()),int(self.SampleCountLine.text()))
-            #serial.read()
-            self.plot(serial.read())
+            try:
+                serial = Serial_reader(ui.PortSelect.currentData(),int(self.BaudLineEdit.text()),int(self.SampleCountLine.text()))
+                #serial.read()
+                self.plot(serial.read())
+            except Exception as e:
+                QMessageBox.warning(self,"Serial Error",str(e))
 
     def plot(self,data):
         #self.PlotWidget = pg.PlotWidget()
