@@ -19,3 +19,4 @@ Smart_meter.ioc
 Smart-Meter.ioc
 Smart-Meter Debug.launch
 .venv
+__pycache__
