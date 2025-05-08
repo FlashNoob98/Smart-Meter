@@ -1,5 +1,5 @@
 import sys
-import os,fnmatch
+import os,fnmatch,platform
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt6.uic import loadUi
 from read_serial import Serial_reader
@@ -32,10 +32,17 @@ class MainUI(QMainWindow):
     def scan_ports(self):
         self.PortSelect.clear()
         self.PortSelect.addItem("Select Port")
-        list_ACM = fnmatch.filter(os.listdir("/dev/"),"*ACM*")
-        for element in list_ACM:
-            self.PortSelect.addItem(element,"/dev/"+element)
-        self.PortSelect.setCurrentIndex(len(list_ACM))
+        if platform.system() == "Linux":
+            list_ACM = fnmatch.filter(os.listdir("/dev/"),"*ACM*")
+            for element in list_ACM:
+                self.PortSelect.addItem(element,"/dev/"+element)
+            self.PortSelect.setCurrentIndex(len(list_ACM))
+        elif platform.system() == "Windows":
+            QMessageBox.warning(self," ","Warning: Windows not supported")
+        elif platform.system() == "Darwin":
+            QMessageBox.warning(self," ","Warning: MacOS not supported")
+        else:
+            QMessageBox.warning(self," ","Warning: Unknown OS")
 
     def updatePort(self):
         #print(self.PortSelect.currentText())

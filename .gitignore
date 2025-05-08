@@ -20,3 +20,4 @@ Smart-Meter.ioc
 Smart-Meter Debug.launch
 .venv
 __pycache__
+.vscode
