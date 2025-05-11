@@ -6,12 +6,11 @@
 
 
 #define RS (GPIOD->ODR0)
-#define RW (GPIOD->ODR1)
-#define E (GPIOD->ODR2)
-#define D4 (GPIOD->ODR3)
-#define D5 (GPIOD->ODR4)
-#define D6 (GPIOD->ODR5)
-#define D7 (GPIOD->ODR6)
+#define E (GPIOD->ODR1)
+#define D4 (GPIOD->ODR2)
+#define D5 (GPIOD->ODR3)
+#define D6 (GPIOD->ODR4)
+#define D7 (GPIOD->ODR5)
 
 void delay_us(int us){
 
@@ -42,7 +41,6 @@ void send_to_lcd (char data, int rs)
 	D4=0;
 	delay_us(20);
 	RS = rs;
-	RW = 0;
 	delay_us(20);
 	E = 1;
 	delay_us(10);
@@ -60,11 +58,11 @@ void lcd_send_cmd (char cmd)
 {
     char datatosend;
     /* send upper nibble first */
-    datatosend = ((cmd)&0x0f);
+    datatosend = ((cmd>>4)&0x0f);
     send_to_lcd(datatosend,0);  // RS must be while sending command
     /* send Lower Nibble */
     //delay_us(1);
-    datatosend = ((cmd<<4)&0x0f);
+    datatosend = ((cmd)&0x0f);
     send_to_lcd(datatosend, 0);
 }
 
@@ -72,57 +70,32 @@ void lcd_send_data (char data)
 {
     char datatosend;
     /* send higher nibble */
-    datatosend = ((data)&0x0f);
+    datatosend = ((data>>4)&0x0f);
     send_to_lcd(datatosend, 1);  // rs =1 for sending data
     /* send Lower nibble */
     //delay_us(1);
-    datatosend = ((data<<4)&0x0f);
+    datatosend = ((data)&0x0f);
     send_to_lcd(datatosend, 1);
     delay_us(1);
 }
 
 void init_lcd(){
-	GPIOD->MODER = 0x5555; //Da PD0 a PD8 in Write mode
+	GPIOD->MODER |= 0x555; //Da PD0 a PD5 in Write mode
 
     // 4 bit initialisation
-    delay_ms(15);  // wait for >15ms
+    delay_ms(20);  // wait for >20ms attendi avvio del display
 
-    lcd_send_cmd(0x03); // Initialize 8bit mode
-    delay_us(10);
-    lcd_send_cmd(0x03); //boh
+    send_to_lcd(0x2,0); // Inizializza display modalità 4 bit
+
+    lcd_send_cmd(0x28); // Function set Display 2 linee
     delay_us(1000);
-    lcd_send_cmd(0x03); //boh
-     delay_us(1000);
-    lcd_send_cmd(0x22); // 4 bit mode
+    lcd_send_cmd(0x0C); //Display on- cursor off - blink OFF;
     delay_us(1000);
-    lcd_send_cmd(0x2C); //4 bit 2 lines
-    delay_us(5000);
-    lcd_send_cmd(0x0C); //Display on;
-    delay_us(5000);
-    lcd_send_cmd(0x01); // Clear display
-    delay_us(5000);
-    lcd_send_cmd(0x02); //Riporta in posizione inziale
+    lcd_send_cmd(0x6); //Entry mode set - shift and increment
+    //lcd_send_cmd(0x01); // Clear display
 
-
-    //lcd_send_cmd (0x2C);  // 4bit mode
     delay_us(20);
     //lcd_send_cmd(0x05);
-  //  lcd_send_cmd(0x0F);
-    //lcd_send_cmd(0x01); //Clear display
-    delay_us(50);
-  //  lcd_send_cmd (0x30);
-    //delay_us(5);
- //   HAL_Delay(5);  // wait for >4.1us
-    //lcd_send_cmd (0x30);
-    //delay_us(1);
- //   HAL_Delay(1);  // wait for >100us
-    //lcd_send_cmd (0x30);
-    //delay_us(10);
-  //  HAL_Delay(10);
-  //  HAL_Delay(10);
-    delay_us(10);
-  // dislay initialisation
- //   lcd_send_cmd (0x28); // Function set --> DL=0 (4 bit mode), N = 1 (2 line display) F = 0 (5x8 characters)
 
 }
 
@@ -140,7 +113,6 @@ void lcd_put_cur(int row, int col)
     }
     lcd_send_cmd (col);
 }
-
 
 void lcd_clear (void)
 {

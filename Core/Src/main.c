@@ -70,15 +70,25 @@ int main(void){
 
 	init_lcd();
 	lcd_put_cur(0, 0);
-	lcd_send_data((char)'A');
+	lcd_send_string("Hello world");
 	//lcd_send_string("HELLO ");
 	//lcd_send_string("WORLD ");
 	//lcd_send_string("FROM");
 	//HAL_Delay(1000);
-	//delay_ms(10);
+	delay_ms(1000);
 
 	lcd_put_cur(1, 0);
-	lcd_send_data((char)'A');
+	lcd_send_string("Ciao a tutti");
+
+	delay_ms(1000);
+
+	lcd_put_cur(0, 20);
+	lcd_send_string("Questo display e' ");
+
+	delay_ms(1000);
+
+	lcd_put_cur(1, 20);
+	lcd_send_string("A ri ciao");
 	//lcd_send_string("CONTROLLERSTECH");
 	//HAL_Delay(2000);
 	//lcd_clear();
