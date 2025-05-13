@@ -19,25 +19,11 @@
 #include <my_structures.h>
 #include <math.h>
 #include <display.h>
+#include <timers.h>
 
 
 //#define PI 3.14159265358
 
-#define RCC ((RCC_Type*) 0x40021000) //Indirizzo di Base RCC
-#define GPIOA ((GPIO_Type*) 0x48000000) //Indirizzo di base GPIOA
-#define GPIOE ((GPIO_Type*) 0x48001000) //Indirizzo di base GPIOE
-#define GPIOC ((GPIO_Type*) 0x48000800) //Indirizzo base GPIOC (USART1)
-
-//#define TIM2 ((TIMER_Type*) 0x40000000) //Indirizzo base timer 2
-#define TIM6 ((TIMER_Type*) 0x40001000) //Indirizzo base timer 6
-
-#define ADC1 ((ADC_Type*) 0x50000000) //Indirizzo base ADC1
-#define ADC2 ((ADC_Type*) 0x50000100) //Indirizzo base ADC2
-#define ADC12 ((ADC_COMMON_Type*) 0x50000300) //Indirizzo comune ADC12
-
-#define DAC1 ((DAC_Type*) 0x40007400) //Indirizzo base DAC1
-
-#define USART1 ((USART_Type*) 0x40013800) //Indirizzo base USART1
 
 //#define GPIOAEN (1<<17)
 //#define GPIOEEN (1<<21)
@@ -48,8 +34,6 @@
 #define Alternate 2	//0b10
 #define Analog 3	//0b11
 
-#define LED_8 (GPIOE->ODR8)
-#define USER_BTN (GPIOA->IDR0)
 
 //static float misura;
 unsigned int misura;
@@ -63,35 +47,13 @@ int main(void){
 	RCC->GPIOAEN = 1; //EnableGPIOA
 	RCC->GPIODEN = 1; //Enable GPIOD
 
-	RCC->TIM6EN = 1; //enable timer 6 (usato per delay display)
-	//TIM6->ARR = (unsigned int) 62500; //500ms ovvero 4000000 count
-	//TIM6->PSC = (unsigned int) 63;
-	TIM6->CEN = 1;//Avvia timer 6
-
+	init_timers();
 	init_lcd();
-	lcd_put_cur(0, 0);
-	lcd_send_string("Hello world");
-	//lcd_send_string("HELLO ");
-	//lcd_send_string("WORLD ");
-	//lcd_send_string("FROM");
-	//HAL_Delay(1000);
-	delay_ms(1000);
 
-	lcd_put_cur(1, 0);
-	lcd_send_string("Ciao a tutti");
+	lcd_clear(); // Pulisci display
+	//delay_ms(5000);
 
-	delay_ms(1000);
-
-	lcd_put_cur(0, 20);
-	lcd_send_string("Questo display e' ");
-
-	delay_ms(1000);
-
-	lcd_put_cur(1, 20);
-	lcd_send_string("A ri ciao");
-	//lcd_send_string("CONTROLLERSTECH");
-	//HAL_Delay(2000);
-	//lcd_clear();
+	lcd_hello_world();
 
 	RCC->GPIOCEN = 1; //Enable GPIOC
 	RCC->USART1EN=1; //Enable USART1
@@ -140,8 +102,8 @@ int main(void){
 
 
 	// Attendi 10 us
-	while(TIM6->UIF){ //Verifica quando avviene l'overflow (500ms)
-		TIM6->UIF = 0;
+	while(TIM4->UIF){ //Verifica quando avviene l'overflow (500ms)
+		TIM4->UIF = 0;
 	}
 
 	ADC2->DIFSEL=(0<<1); //Imposta in single ended il secondo canale dell ADC2
@@ -178,13 +140,13 @@ int main(void){
 
 		//while(!USER_BTN){
 			//GPIOE->ODR = (GPIOE->ODR)+(1<<8); Messo qui mostra una combinazione "casuale" ogni volta che trattieni il tasto
-			if(TIM6->UIF){ //Verifica quando avviene l'overflow
+			if(TIM4->UIF){ //Verifica quando avviene l'overflow
 				if (clear){
 					GPIOE->ODR|=0x0080; //Riparti dal led 7 (Solo animazione orologio
 					GPIOE->ODR=0; //Spegni tutto (Entrambe le animazioni o solo accumulo)
 					clear = 0;
 				}
-				TIM6->UIF = 0; //Reimposta UIF ovvero accetta evento di overflow
+				TIM4->UIF = 0; //Reimposta UIF ovvero accetta evento di overflow
 				//LED_8 ^= 1; //Commuta LED 8
 				GPIOE->ODR = ((GPIOE->ODR)<<1); //ANIMAZIONE "orologio"
 				GPIOE->ODR = (GPIOE->ODR)+(1<<8); //ANIMAZIONE "accumulo binario"

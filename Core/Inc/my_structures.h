@@ -193,24 +193,63 @@ typedef struct TIMER{
 			unsigned UDIS:1;
 			unsigned URS:1;
 			unsigned OPM:1;
-			unsigned RES0:3;
+			unsigned DIR:1;
+			unsigned CMS:2;
 			unsigned ARPE:1;
-			unsigned RES1:3;
+			unsigned CKD:2;
+			unsigned RES0:1;
 			unsigned UIFREMA:1;
 			unsigned RES2:20;
 		};//Struct Cr1
 	};//Union Cr1
 	unsigned int CR2;
 	unsigned int SMCR;
-	unsigned int DIER;
+	union{ //DIER
+		unsigned int DIER;
+		struct{
+			unsigned UIE:1;
+			unsigned CC1IE:1;
+			unsigned CC2IE:1;
+			unsigned CC3IE:1;
+			unsigned CC4IE:1;
+			unsigned res_3:1;
+			unsigned TIE:1;
+			unsigned res_4:1;
+			unsigned TDE:1;
+			unsigned res_5:17;
+		};
+	};
 	union{ //SR
 		unsigned int SR;
 		struct{
 			unsigned UIF:1;
-			unsigned RES3:31;
+			unsigned CC1IF:1;
+			unsigned CC2IF:1;
+			unsigned CC3IF:1;
+			unsigned CC4IF:1;
+			unsigned RES_6:1;
+			unsigned TIF:1;
+			unsigned res_7:2;
+			unsigned CC1OF:1;
+			unsigned CC2OF:1;
+			unsigned CC3OF:1;
+			unsigned CC4OF:1;
+			unsigned res_8:19;
 		};//Struct SR
 	};//UNION SR
-	unsigned int EGR;
+	union{ //Union EGR
+		unsigned int EGR;
+		struct{
+			unsigned UG:1;
+			unsigned CC1G:1;
+			unsigned CC2G:1;
+			unsigned CC3G:1;
+			unsigned CC4G:1;
+			unsigned res_9:1;
+			unsigned TG:1;
+			unsigned res_10:25;
+		};
+	};
 	unsigned int CCMR1;
 	unsigned int CCMR2;
 	unsigned int CCER;
@@ -225,7 +264,7 @@ typedef struct TIMER{
 	unsigned int SR_RES1;
 	unsigned int DCR;
 	unsigned int DMAR;
-}TIMER_Type;
+}GP_TIMER_Type;
 
 typedef struct ADC{
 	union{ //ISR
@@ -842,5 +881,30 @@ typedef struct USART{
 	unsigned int RDR;
 	unsigned int TDR;
 }USART_Type;
+
+// Memory locations
+#define RCC ((RCC_Type*) 0x40021000) //Indirizzo di Base RCC
+#define GPIOA ((GPIO_Type*) 0x48000000) //Indirizzo di base GPIOA
+#define GPIOC ((GPIO_Type*) 0x48000800) //Indirizzo base GPIOC (USART1)
+#define GPIOD ((GPIO_Type*) 0x48000C00) //Indirizzo base GPIOD (Display 0-7)
+#define GPIOE ((GPIO_Type*) 0x48001000) //Indirizzo di base GPIOE
+
+#define TIM2 ((GP_TIMER_Type*) 0x40000000) //Indirizzo base timer 2
+#define TIM3 ((GP_TIMER_Type*) 0x40000400) //Indirizzo base timer 3
+#define TIM4 ((GP_TIMER_Type*) 0x40000800) //Indirizzo timer 4
+
+#define ADC1 ((ADC_Type*) 0x50000000) //Indirizzo base ADC1
+#define ADC2 ((ADC_Type*) 0x50000100) //Indirizzo base ADC2
+#define ADC12 ((ADC_COMMON_Type*) 0x50000300) //Indirizzo comune ADC12
+
+#define DAC1 ((DAC_Type*) 0x40007400) //Indirizzo base DAC1
+
+#define USART1 ((USART_Type*) 0x40013800) //Indirizzo base USART1
+
+#define LED_8 (GPIOE->ODR8)
+#define USER_BTN (GPIOA->IDR0)
+
+
+
 
 #endif /* SRC_MY_STRUCTURES_H_ */

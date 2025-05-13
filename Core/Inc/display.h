@@ -17,4 +17,6 @@ void lcd_put_cur(int row, int col);  // put cursor at the entered position row (
 
 void lcd_clear (void);
 
+void lcd_hello_world(void);
+
 #endif /* INC_display_H_ */
