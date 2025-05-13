@@ -38,12 +38,13 @@
 unsigned int animazione_led(unsigned int);
 
 //static float misura;
-unsigned int misura;
-static char a;
-static char b;
+
 
 int main(void){
 	unsigned int clear = 0;
+	unsigned int misura;
+	static char a;
+	static char b;
 
 	//Abilita il clock per GPIOA e GPIOE
 	//RCC->AHBENR|=GPIOAEN|GPIOEEN; //Enable GPIOE e GPIOA
@@ -145,9 +146,12 @@ int main(void){
 				misura = ADC2->RDATA; //Acquisisci dato
 				a = misura;
 				b = (misura>>8);
+				usart_send(0xFF);
+				usart_send(0xFF);
+				usart_send('A');
+				//usart_send(preambolo);
 				usart_send(a);
 				usart_send(b);
-				usart_send((char)'\r');
 			}
 
 	}//end while

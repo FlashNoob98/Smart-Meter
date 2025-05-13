@@ -7,26 +7,34 @@ class Serial_reader():
         self.pre = []
         self.post = []
         self.pre_total=[]
-        self.ser = serial.Serial(port, baudrate=baud, timeout=3.0)
+        self.ser = serial.Serial(port, baudrate=baud-1, timeout=3.0)
         self.counter = 0
         #while True:
 
     def read(self):
-        for line in self.ser.read(self.count):
-            if (chr(line) == (('\r'))):
-                self.counter = self.counter+1
-                pass
-                #print("\n")
-            else:
-                if (self.counter > 0):
-                    print(str(self.counter) + str(': ') + str(bin(line)) )
+        line = self.ser.read(self.count*4)
+        #print(line)
+        for index in range(len(line)-4):
+            print(line[index])
+            print(line[index+1])
+            print(line[index+2])
+            print(line[index+3])
+            if (line[index] == 255):
+                #print("255")
+                if (line[index+1] == 255):
+                    if(line[index+2]==65): #65=A
+                        #print("A")
+                        #print(str(self.counter) + str(': ') + str(bin(line[index])) )
                     #print((line))
-                    if ((self.counter%2)!=0):#Se dispari
-                        self.post.append(bin(line))
+                        self.post.append(bin(line[index+3]))                 
+                        self.pre.append(bin(line[index+4]))
+                        index = index+4
                         self.counter = self.counter+1
-                    else:
-                        self.pre.append(bin(line))
-                    
+                    pass
+                #print("\n")
+
+        #print(line)
+             
 
         if len(self.pre)>len(self.post):
             self.pre.pop()
