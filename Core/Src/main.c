@@ -20,6 +20,7 @@
 #include <math.h>
 #include <display.h>
 #include <timers.h>
+#include <usart.h>
 
 
 //#define PI 3.14159265358
@@ -34,6 +35,7 @@
 #define Alternate 2	//0b10
 #define Analog 3	//0b11
 
+unsigned int animazione_led(unsigned int);
 
 //static float misura;
 unsigned int misura;
@@ -41,19 +43,14 @@ static char a;
 static char b;
 
 int main(void){
-	unsigned int clear;
+	unsigned int clear = 0;
+
 	//Abilita il clock per GPIOA e GPIOE
 	//RCC->AHBENR|=GPIOAEN|GPIOEEN; //Enable GPIOE e GPIOA
 	RCC->GPIOAEN = 1; //EnableGPIOA
 	RCC->GPIODEN = 1; //Enable GPIOD
 
-	init_timers();
-	init_lcd();
-
-	lcd_clear(); // Pulisci display
-	//delay_ms(5000);
-
-	lcd_hello_world();
+	init_timers(); // Inizializza timer 2-3-4
 
 	RCC->GPIOCEN = 1; //Enable GPIOC
 	RCC->USART1EN=1; //Enable USART1
@@ -73,19 +70,6 @@ int main(void){
 	DAC1->EN1=1; //EN1 Abilita canale 1 Dac 1
 	DAC1->BOFF1=1; //Disabilitazione buffer (carico alta impedenza)
 
-
-	unsigned int Npp = 100;
-	unsigned int y[100];
-	float x = 0.0;
-	float dx = (float)(2*M_PI/Npp);
-
-	for (int i=0; i<Npp; i++){
-		y[i] = (unsigned int)(2048+(2047*sinf(x)));
-		x = x + dx;
-		//DAC1->DACC1DHRR1 = y[i];
-	}//END FOR
-
-
 	RCC->ADC12EN = 1; //Abilita ADC12 nell'RCC
 	ADC12->CKMODE = 0b01; //CKMODE 01 syncronous clock mode
 	//ADC12->DUAL = 0b0000; //Modalità indipendente degli ADC
@@ -98,13 +82,29 @@ int main(void){
 	GPIOE->MODER = 0x55550000; //led output da 8 a 15
 	//RCC->TIM2EN=1; //enable timer2
 
+	init_lcd();
+
+	lcd_clear(); // Pulisci display
+	//delay_ms(5000);
+
+	lcd_hello_world();
 
 
+	unsigned int Npp = 100;
+	unsigned int y[100];
+	float x = 0.0;
+	float dx = (float)(2*M_PI/Npp);
 
-	// Attendi 10 us
-	while(TIM4->UIF){ //Verifica quando avviene l'overflow (500ms)
-		TIM4->UIF = 0;
-	}
+	for (int i=0; i<Npp; i++){
+		y[i] = (unsigned int)(2048+(2047*sinf(x)));
+		x = x + dx;
+		//DAC1->DACC1DHRR1 = y[i];
+	}//END FOR
+
+	// Attendi 10 us - superfluo ho i wait del display
+//	while(TIM4->UIF){ //Verifica quando avviene l'overflow (500ms)
+//		TIM4->UIF = 0;
+//	}
 
 	ADC2->DIFSEL=(0<<1); //Imposta in single ended il secondo canale dell ADC2
 
@@ -129,59 +129,48 @@ int main(void){
 	ADC2->SMP2 = 2;
 
 
-
     //Fine setup
+
+
 	while(1){	//Main loop
-		LED_8 = 1; //Accendi LED 8
-//		while(!USER_BTN);//Aspetto fino a che Tasto Ã¨ 0 (Non Premuto)
-//  	while(USER_BTN);//Aspetto fino a che Tasto Ã¨ 1 (Premuto)
-		//TIM2->CNT = 0;//Reimposta contatore 2 (conta secondi)
-		//TIM6->CNT = 0; //Reimposta contatore 6 (animazione LED)
+			clear = animazione_led(clear);
 
-		//while(!USER_BTN){
-			//GPIOE->ODR = (GPIOE->ODR)+(1<<8); Messo qui mostra una combinazione "casuale" ogni volta che trattieni il tasto
-			if(TIM4->UIF){ //Verifica quando avviene l'overflow
-				if (clear){
-					GPIOE->ODR|=0x0080; //Riparti dal led 7 (Solo animazione orologio
-					GPIOE->ODR=0; //Spegni tutto (Entrambe le animazioni o solo accumulo)
-					clear = 0;
-				}
-				TIM4->UIF = 0; //Reimposta UIF ovvero accetta evento di overflow
-				//LED_8 ^= 1; //Commuta LED 8
-				GPIOE->ODR = ((GPIOE->ODR)<<1); //ANIMAZIONE "orologio"
-				GPIOE->ODR = (GPIOE->ODR)+(1<<8); //ANIMAZIONE "accumulo binario"
-				if (((GPIOE->ODR)==(0xff00))||((GPIOE->ODR)==(0x0000))){ //Quando termini i LED riparti dal numero 8
-					//LED_8=1;
-					clear = 1;
-			//	}
-
-
-				//TIM6->ARR = 62500*misura/3.3+1; //Velocizza
-			}//Durante la misura
-
-
-		};
-			//GPIOE->ODR=0;
-		//Quarta funzione
 			USART1->TE=1; //TE Idle frame
 
 			for (int i=0; i<100;i++){
-			DAC1->DACC1DHRR1 = y[i];
-			ADC1->ADSTART=1; //Inizia conversione (è il master ad avviare la conversione)
-			while (ADC1->EOC!=1); //Attendi fine conversione (sempre del master)
+				DAC1->DACC1DHRR1 = y[i];
+				ADC1->ADSTART=1; //Inizia conversione (è il master ad avviare la conversione)
+				while (ADC1->EOC!=1); //Attendi fine conversione (sempre del master)
 			//misura = (float)(ADC2->RDATA)/4096*3.3; //Leggi data register
-			misura = ADC2->RDATA; //Acquisisci dato
-			a = misura;
-			b = (misura>>8);
-			while((USART1->TXE)==0); //Attendi  BIT TXE
-			USART1->TDR = a;
-			while((USART1->TXE)==0); //Attendi  BIT TXE
-			USART1->TDR = b;
-			while ((USART1->TXE)==0);
-			USART1->TDR = (char)'\r';
-			//(USART1->ISR)|=(0<<7);SPI4E
-			//}
+				misura = ADC2->RDATA; //Acquisisci dato
+				a = misura;
+				b = (misura>>8);
+				usart_send(a);
+				usart_send(b);
+				usart_send((char)'\r');
 			}
 
 	}//end while
 }//END MAIN
+
+unsigned int animazione_led(unsigned int clear){
+
+	LED_8 = 1; //Accendi LED 8
+	//while(!USER_BTN){
+		//GPIOE->ODR = (GPIOE->ODR)+(1<<8); Messo qui mostra una combinazione "casuale" ogni volta che trattieni il tasto
+	if(TIM4->UIF){ //Verifica quando avviene l'overflow
+		if (clear){
+			GPIOE->ODR|=0x0080; //Riparti dal led 7 (Solo animazione orologio
+			GPIOE->ODR=0; //Spegni tutto (Entrambe le animazioni o solo accumulo)
+			clear = 0;
+		}
+		TIM4->UIF = 0; //Reimposta UIF ovvero accetta evento di overflow
+		//LED_8 ^= 1; //Commuta LED 8
+		GPIOE->ODR = ((GPIOE->ODR)<<1); //ANIMAZIONE "orologio"
+		GPIOE->ODR = (GPIOE->ODR)+(1<<8); //ANIMAZIONE "accumulo binario"
+		if (((GPIOE->ODR)==(0xff00))||((GPIOE->ODR)==(0x0000))){ //Quando termini i LED riparti dal numero 8
+			clear = 1;
+		}//Durante la misura
+	};
+	return clear;
+}
