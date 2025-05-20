@@ -37,12 +37,16 @@
 
 unsigned int animazione_led(unsigned int);
 
+void init_ADC(ADC_Type *ADC ,int);
+
 //static float misura;
 
 
 int main(void){
 	unsigned int clear = 0;
 	unsigned int misura;
+	unsigned short tensione;
+	unsigned short corrente;
 	static char a;
 	static char b;
 
@@ -73,9 +77,9 @@ int main(void){
 
 	RCC->ADC12EN = 1; //Abilita ADC12 nell'RCC
 	ADC12->CKMODE = 0b01; //CKMODE 01 syncronous clock mode
-	//ADC12->DUAL = 0b0000; //Modalità indipendente degli ADC
-	ADC2->ADVREGEN = 0b00;//Attiva regolatore di tensione fase intermedia
-	ADC2->ADVREGEN = 0b01;//Attiva regolatore di tensione accensione
+	ADC12->DUAL = 0b00110; //Modalità sincrona degli ADC
+
+
 
 	//Abilito i timer
 	RCC->GPIOEEN = 1; //Enable GPIOE
@@ -107,28 +111,8 @@ int main(void){
 //		TIM4->UIF = 0;
 //	}
 
-	ADC2->DIFSEL=(0<<1); //Imposta in single ended il secondo canale dell ADC2
-
-	//Calibrazione
-	ADC2->ADEN=0; //Spegni ADC (superfluo la prima volta)
-	ADC2->ADCALDIF=0;//Imposta calibrazione single ended
-	ADC2->ADCAL=1; //Avvia
-	while (ADC2->ADCAL!=0); //Attendi termine calibrazione
-
-	//Abilitazione ADC
-	ADC2->ADEN=1; //Abilita ADC
-	while (ADC2->ADRDY!=1); //Attendi commutazione Ready
-	ADC2->ADRDY=0; //Riabbassa bit ready (per eventuali acquisizioni successive)
-
-	//Definizione sequenza di acquisizione
-	//PA1 è collegato al canale ADC1_IN2
-	ADC2->L=1-1; //Lunghezza azquisizione = 1(-1), un solo canale
-	ADC2->SQ1=2; //Canale 2 nella posizione di sequenza 1
-
-	//Impostare il tempo di sampling (sul canale 2)
-	//ADC2->SMP2 = 7; // (0b111) 601.5 volte il clock dell'ADC
-	ADC2->SMP2 = 2;
-
+	init_ADC(ADC1,1); //Inizializza e calibra ADC1 canale 1
+	init_ADC(ADC2,2); //Inizializza e calibra ADC2 canale 2
 
     //Fine setup
 
@@ -143,7 +127,12 @@ int main(void){
 				ADC1->ADSTART=1; //Inizia conversione (è il master ad avviare la conversione)
 				while (ADC1->EOC!=1); //Attendi fine conversione (sempre del master)
 			//misura = (float)(ADC2->RDATA)/4096*3.3; //Leggi data register
-				misura = ADC2->RDATA; //Acquisisci dato
+				//misura = ADC2->RDATA; //Acquisisci dato
+				misura = ADC12->CDR;
+				tensione = misura;  // channel on master
+				corrente = (misura>>16); // channel on slave
+
+
 				a = misura;
 				b = (misura>>8);
 				usart_send(0xFF);
@@ -178,3 +167,39 @@ unsigned int animazione_led(unsigned int clear){
 	};
 	return clear;
 }
+
+void init_ADC(ADC_Type *ADC, int channel){
+	ADC->ADVREGEN = 0b00;//Attiva regolatore di tensione fase intermedia
+	ADC->ADVREGEN = 0b01;//Attiva regolatore di tensione accensione
+	delay_us(20);
+
+	ADC->DIFSEL=(0<<channel); //Single ended canale 1
+	//ADC2->DIFSEL=(0<<1); //Imposta in single ended il secondo canale dell ADC2
+
+	//Calibrazione
+	ADC->ADEN=0; //Spegni ADC (superfluo la prima volta)
+	ADC->ADCALDIF=0;//Imposta calibrazione single ended
+	ADC->ADCAL=1; //Avvia
+	while (ADC->ADCAL!=0); //Attendi termine calibrazione
+
+	//Abilitazione ADC
+	ADC->ADEN=1; //Abilita ADC
+	while (ADC->ADRDY!=1); //Attendi commutazione Ready
+	ADC->ADRDY=0; //Riabbassa bit ready (per eventuali acquisizioni successive)
+
+	//Definizione sequenza di acquisizione
+	ADC->L=0; //Lunghezza azquisizione = 1(-1), un solo canale
+	ADC->SQ1=channel; //Canale 1 nella posizione di sequenza 1
+
+	//Impostare il tempo di sampling (sul canale 2)
+	//ADC2->SMP2 = 7; // (0b111) 601.5 volte il clock dell'ADC
+	//ADC->SMP2 = 2;
+	if (channel < 10) {
+		ADC->SMPR1 = (0<<((channel)*3));
+	}
+	else {
+		ADC->SMPR2 = (0<<((channel-10)*3));
+	}
+
+}
+
