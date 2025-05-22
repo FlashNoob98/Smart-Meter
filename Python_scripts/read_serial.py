@@ -7,48 +7,62 @@ class Serial_reader():
         self.pre = []
         self.post = []
         self.pre_total=[]
-        self.ser = serial.Serial(port, baudrate=baud-1, timeout=3.0)
+        self.ser = serial.Serial(port, baudrate=baud, timeout=3.0)
         self.counter = 0
+        self.preI = []
+        self.postI = []
+        self.pre_totalI=[]
+        self.sommaV=[]
+        self.sommaI=[]
         #while True:
 
+    def rearrange(self,pre,post,pre_total,somma):
+       # if len(pre)>len(post):
+       #     pre.pop()
+       # elif len(post)>len(pre):
+       #     post.pop()
+        for element in pre:
+            #print(element)
+            pre_total.append(element + "00000000")
+        for i in range(0,len(post)):
+            somma.append(int(pre_total[i],base=2)+int(post[i],base=2))
+            print(pre_total[i])
+            print(int(pre_total[i],base=2))
+            print(post[i])
+            print(int(post[i],base=2))
+            print("somma: " + str(somma[i]))
+
+
     def read(self):
-        line = self.ser.read(self.count*4)
+        line = self.ser.read(self.count*6)
         #print(line)
-        for index in range(len(line)-4):
-            print(line[index])
-            print(line[index+1])
-            print(line[index+2])
-            print(line[index+3])
+        for index in range(len(line)-3):
+            #print(line[index])
             if (line[index] == 255):
                 #print("255")
-                if (line[index+1] == 255):
-                    if(line[index+2]==65): #65=A
+                    if(line[index+1]==65): #65=A
                         #print("A")
                         #print(str(self.counter) + str(': ') + str(bin(line[index])) )
                     #print((line))
-                        self.post.append(bin(line[index+3]))                 
-                        self.pre.append(bin(line[index+4]))
-                        index = index+4
+                        self.post.append(bin(line[index+2]))                 
+                        self.pre.append(bin(line[index+3]))
                         self.counter = self.counter+1
-                    pass
+                    elif(line[index+1]==66): #66=B
+                        if self.counter==0: #Previeni offset due misure
+                            continue
+                        self.postI.append(bin(line[index+2]))                 
+                        self.preI.append(bin(line[index+3]))                    
                 #print("\n")
 
         #print(line)
-             
 
-        if len(self.pre)>len(self.post):
-            self.pre.pop()
-        elif len(self.post)>len(self.pre):
-            self.post.pop()
+        self.rearrange(self.pre,self.post,self.pre_total,self.sommaV)
+        self.rearrange(self.preI,self.postI,self.pre_totalI,self.sommaI)
 
-        for element in self.pre:
-            self.pre_total.append(element + '00000000')
 
-        somma = []
-        for i in range(0,len(self.post)):
-            somma.append(int(self.pre_total[i],2)+int(self.post[i],2))
+        return
+    
 
-        return somma
 
 if __name__=="__main__":
     read = Serial_reader("COM3",9600,1000)

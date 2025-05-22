@@ -29,6 +29,8 @@ class MainUI(QMainWindow):
         self.PlotWidget.setLabel('bottom', 'X-Axis')
         self.PlotWidget.showGrid(x=True, y=True)
 
+        
+
     def scan_ports(self):
         self.PortSelect.clear()
         self.PortSelect.addItem("Select Port")
@@ -38,7 +40,13 @@ class MainUI(QMainWindow):
                 self.PortSelect.addItem(element,"/dev/"+element)
             self.PortSelect.setCurrentIndex(len(list_ACM))
         elif platform.system() == "Windows":
-            QMessageBox.warning(self," ","Warning: Windows not supported")
+            import serial.tools.list_ports
+            ports = serial.tools.list_ports.comports()
+            for port, desc, hwid in sorted(ports):
+                #print("{}: {} [{}]".format(port, desc, hwid))
+                self.PortSelect.addItem(port,port)
+            self.PortSelect.setCurrentIndex(len(ports))
+            #QMessageBox.warning(self," ","Warning: Windows not supported") Windows is now SupPORTed!
         elif platform.system() == "Darwin":
             QMessageBox.warning(self," ","Warning: MacOS not supported")
         else:
@@ -57,15 +65,17 @@ class MainUI(QMainWindow):
             try:
                 serial = Serial_reader(ui.PortSelect.currentData(),int(self.BaudLineEdit.text()),int(self.SampleCountLine.text()))
                 #serial.read()
-                self.plot(serial.read())
+                serial.read()
+                self.plot(serial.sommaV, serial.sommaI)
             except Exception as e:
                 QMessageBox.warning(self,"Serial Error",str(e))
 
-    def plot(self,data):
+    def plot(self,voltage,current):
         #self.PlotWidget = pg.PlotWidget()
         self.PlotWidget.clear()
         self.PlotWidget.addLegend()
-        self.PlotWidget.plot(data,pen='r',name="Test")
+        self.PlotWidget.plot(voltage,pen='r',name="Voltage")
+        self.PlotWidget.plot(current,pen='b',name="Current")
         self.PlotWidget.show()
 
 if __name__ == "__main__":

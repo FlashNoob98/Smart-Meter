@@ -1,0 +1,16 @@
+Per eseuire il programma Python sarà necessario installare i pacchetti indicati in 'requirements.txt'
+
+
+1) Su windows si possono installare in modo "globale" eseuendo il seguente comando in un terminale:
+'pip install -r requirements.txt'
+
+2) In alternativa si può creare un ambiente virtuale ed installarli solo lì, in una cartella nel progetto:
+'python -m venv .venv'
+questo crea un ambiente virtuale nella cartella '.venv'
+successivamente va attivato l'ambiente con il comando
+'.\.venv\Scripts\activate'
+Infine si possono installare i pacchetti necessari con il comando precedente:
+'pip install -r requirements.txt'
+
+In questo caso prima di eseguire lo script con 'python load_ui.py' sarà necessario attivare
+l'ambiente virtuale con il comando '.\.venv\Scripts\activate'

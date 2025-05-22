@@ -35,20 +35,23 @@
 #define Alternate 2	//0b10
 #define Analog 3	//0b11
 
-unsigned int animazione_led(unsigned int);
+unsigned char animazione_led(unsigned char);
 
 void init_ADC(ADC_Type *ADC ,int);
 
+void invia_valore(unsigned short valore, char A);
+
 //static float misura;
+
+#define NCampioni 100
 
 
 int main(void){
-	unsigned int clear = 0;
-	unsigned int misura;
-	unsigned short tensione;
-	unsigned short corrente;
-	static char a;
-	static char b;
+	unsigned char clear = 0;
+	unsigned int misura[NCampioni];
+	unsigned short tensione=0;
+	unsigned int corrente=0;
+
 
 	//Abilita il clock per GPIOA e GPIOE
 	//RCC->AHBENR|=GPIOAEN|GPIOEEN; //Enable GPIOE e GPIOA
@@ -68,7 +71,9 @@ int main(void){
 	USART1->UE=1; //UE = 1 abilita Usart 1
 
 	GPIOA->MODER4 = Analog; //DAC metti pin 4 in modalità analogica
-	GPIOA->MODER5 = Analog; //Abilita modalità analogica su pin PA5
+
+	GPIOA->MODER1 = Analog; //Modalià analogica PA1 (ADC1 channel 2)
+	GPIOA->MODER5 = Analog; //Abilita modalità analogica su pin PA5 (ADC2)
 
 	RCC->DAC1EN=1; //Abilita il DAC
 	DAC1->DACC1DHRR1 = 2048; //Valore iniziale
@@ -96,12 +101,13 @@ int main(void){
 
 
 	unsigned int Npp = 100;
-	unsigned int y[100];
+	unsigned int y[NCampioni];
 	float x = 0.0;
 	float dx = (float)(2*M_PI/Npp);
 
 	for (int i=0; i<Npp; i++){
 		y[i] = (unsigned int)(2048+(2047*sinf(x)));
+		//y[i] = 4094;
 		x = x + dx;
 		//DAC1->DACC1DHRR1 = y[i];
 	}//END FOR
@@ -111,8 +117,10 @@ int main(void){
 //		TIM4->UIF = 0;
 //	}
 
-	init_ADC(ADC1,1); //Inizializza e calibra ADC1 canale 1
+	init_ADC(ADC1,2); //Inizializza e calibra ADC1 canale 2
 	init_ADC(ADC2,2); //Inizializza e calibra ADC2 canale 2
+
+	USART1->TE=1; //Abilita trasmissione USART
 
     //Fine setup
 
@@ -120,33 +128,28 @@ int main(void){
 	while(1){	//Main loop
 			clear = animazione_led(clear);
 
-			USART1->TE=1; //TE Idle frame
 
-			for (int i=0; i<100;i++){
+			for (int i=0; i<NCampioni;i++){ //Acquisisci campioni
 				DAC1->DACC1DHRR1 = y[i];
 				ADC1->ADSTART=1; //Inizia conversione (è il master ad avviare la conversione)
 				while (ADC1->EOC!=1); //Attendi fine conversione (sempre del master)
 			//misura = (float)(ADC2->RDATA)/4096*3.3; //Leggi data register
 				//misura = ADC2->RDATA; //Acquisisci dato
-				misura = ADC12->CDR;
-				tensione = misura;  // channel on master
-				corrente = (misura>>16); // channel on slave
+				misura[i] = ADC12->CDR;
+			}
 
 
-				a = misura;
-				b = (misura>>8);
-				usart_send(0xFF);
-				usart_send(0xFF);
-				usart_send('A');
-				//usart_send(preambolo);
-				usart_send(a);
-				usart_send(b);
+			for (int i=0; i<NCampioni;i++){ //Invia dati (da mettere in un if con lettura RX)
+				tensione = misura[i]+2048;  // channel on master
+				corrente = (misura[i]>>16)+2048; // channel on slave
+				invia_valore(tensione,'A');
+				invia_valore(corrente,'B');
 			}
 
 	}//end while
 }//END MAIN
 
-unsigned int animazione_led(unsigned int clear){
+unsigned char animazione_led(unsigned char clear){
 
 	LED_8 = 1; //Accendi LED 8
 	//while(!USER_BTN){
@@ -195,11 +198,25 @@ void init_ADC(ADC_Type *ADC, int channel){
 	//ADC2->SMP2 = 7; // (0b111) 601.5 volte il clock dell'ADC
 	//ADC->SMP2 = 2;
 	if (channel < 10) {
-		ADC->SMPR1 = (0<<((channel)*3));
+		ADC->SMPR1 = (7<<((channel)*3));
 	}
 	else {
-		ADC->SMPR2 = (0<<((channel-10)*3));
+		ADC->SMPR2 = (7<<((channel-10)*3));
 	}
 
 }
+
+void invia_valore(unsigned short valore, char A){
+	char a;
+	char b;
+	a = valore;
+	b = (valore>>8);
+	//usart_send(0xFF);
+	usart_send(0xFF);
+	usart_send(A);
+	//usart_send(preambolo);
+	usart_send(a);
+	usart_send(b);
+}
+
 
