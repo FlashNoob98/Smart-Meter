@@ -140,8 +140,8 @@ int main(void){
 
 
 			for (int i=0; i<NCampioni;i++){ //Invia dati (da mettere in un if con lettura RX)
-				tensione = misura[i]+2048;  // channel on master
-				corrente = (misura[i]>>16)+2048; // channel on slave
+				tensione = misura[i];  // channel on master
+				corrente = (misura[i]>>16); // channel on slave
 				invia_valore(tensione,'A');
 				invia_valore(corrente,'B');
 			}
