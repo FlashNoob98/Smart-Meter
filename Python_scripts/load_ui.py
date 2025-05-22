@@ -70,12 +70,22 @@ class MainUI(QMainWindow):
             except Exception as e:
                 QMessageBox.warning(self,"Serial Error",str(e))
 
+  
+    def writeDataToFile(self,data):
+        OUT_FILE= 'results.txt'
+        f = open(OUT_FILE, 'a')
+        f.write(f"{data}\n")
+        f.close()
+        print("data written")
+
+
     def plot(self,voltage,current):
         #self.PlotWidget = pg.PlotWidget()
         self.PlotWidget.clear()
         self.PlotWidget.addLegend()
         self.PlotWidget.plot(voltage,pen='r',name="Voltage")
-        self.PlotWidget.plot(current,pen='b',name="Current")
+        self.writeDataToFile(voltage)
+        #self.PlotWidget.plot(current,pen='b',name="Current")
         self.PlotWidget.show()
 
 if __name__ == "__main__":

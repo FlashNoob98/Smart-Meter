@@ -7,7 +7,7 @@ class Serial_reader():
         self.pre = []
         self.post = []
         self.pre_total=[]
-        self.ser = serial.Serial(port, baudrate=baud, timeout=3.0)
+        self.ser = serial.Serial(port, baudrate=baud, timeout=10.0)
         self.counter = 0
         self.preI = []
         self.postI = []
@@ -34,7 +34,8 @@ class Serial_reader():
 
 
     def read(self):
-        line = self.ser.read(self.count*6)
+        self.ser.write('A'.encode('utf-8')) #A
+        line = self.ser.read(self.count*8)
         #print(line)
         for index in range(len(line)-3):
             #print(line[index])

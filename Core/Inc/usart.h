@@ -10,4 +10,6 @@
 
 void usart_send(unsigned int data);
 
+char usart_read();
+
 #endif /* INC_USART_H_ */

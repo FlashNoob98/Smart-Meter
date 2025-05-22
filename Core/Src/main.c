@@ -43,7 +43,7 @@ void invia_valore(unsigned short valore, char A);
 
 //static float misura;
 
-#define NCampioni 100
+#define NCampioni 400
 
 
 int main(void){
@@ -100,12 +100,11 @@ int main(void){
 	lcd_hello_world();
 
 
-	unsigned int Npp = 100;
 	unsigned int y[NCampioni];
 	float x = 0.0;
-	float dx = (float)(2*M_PI/Npp);
+	float dx = (float)(2*M_PI/NCampioni);
 
-	for (int i=0; i<Npp; i++){
+	for (int i=0; i<NCampioni; i++){
 		y[i] = (unsigned int)(2048+(2047*sinf(x)));
 		//y[i] = 4094;
 		x = x + dx;
@@ -121,17 +120,28 @@ int main(void){
 	init_ADC(ADC2,2); //Inizializza e calibra ADC2 canale 2
 
 	USART1->TE=1; //Abilita trasmissione USART
-
+	USART1->RE=1; //Abilita ricezione
     //Fine setup
 
+	//delay_us2(10);
 
+	//TIM4->ARR=1125;
+	//TIM4->ARR=1599; //Arr 100 campioni per periodo 5kHz (5.01 reale)
+	TIM4->ARR=799; //ARR 200 campioni (10kHz)
+	//TIM4->ARR=399; //ARR con 400 campioni (20kHz)
+	TIM4->CEN=1;
 	while(1){	//Main loop
-			clear = animazione_led(clear);
+			//clear = animazione_led(clear);
 
+		usart_read();
 
 			for (int i=0; i<NCampioni;i++){ //Acquisisci campioni
+
 				DAC1->DACC1DHRR1 = y[i];
+				//delay_us((int)200);
+				while(TIM4->UIF==0);
 				ADC1->ADSTART=1; //Inizia conversione (è il master ad avviare la conversione)
+				TIM4->UIF=0;
 				while (ADC1->EOC!=1); //Attendi fine conversione (sempre del master)
 			//misura = (float)(ADC2->RDATA)/4096*3.3; //Leggi data register
 				//misura = ADC2->RDATA; //Acquisisci dato
@@ -142,7 +152,7 @@ int main(void){
 			for (int i=0; i<NCampioni;i++){ //Invia dati (da mettere in un if con lettura RX)
 				tensione = misura[i];  // channel on master
 				corrente = (misura[i]>>16); // channel on slave
-				invia_valore(tensione,'A');
+				invia_valore(tensione,'A'); //Invia campioni qui
 				invia_valore(corrente,'B');
 			}
 
@@ -160,7 +170,7 @@ unsigned char animazione_led(unsigned char clear){
 			GPIOE->ODR=0; //Spegni tutto (Entrambe le animazioni o solo accumulo)
 			clear = 0;
 		}
-		TIM4->UIF = 0; //Reimposta UIF ovvero accetta evento di overflow
+		//TIM4->UIF = 0; //Reimposta UIF ovvero accetta evento di overflow
 		//LED_8 ^= 1; //Commuta LED 8
 		GPIOE->ODR = ((GPIOE->ODR)<<1); //ANIMAZIONE "orologio"
 		GPIOE->ODR = (GPIOE->ODR)+(1<<8); //ANIMAZIONE "accumulo binario"
@@ -198,10 +208,10 @@ void init_ADC(ADC_Type *ADC, int channel){
 	//ADC2->SMP2 = 7; // (0b111) 601.5 volte il clock dell'ADC
 	//ADC->SMP2 = 2;
 	if (channel < 10) {
-		ADC->SMPR1 = (7<<((channel)*3));
+		ADC->SMPR1 = (6<<((channel)*3));
 	}
 	else {
-		ADC->SMPR2 = (7<<((channel-10)*3));
+		ADC->SMPR2 = (6<<((channel-10)*3));
 	}
 
 }
