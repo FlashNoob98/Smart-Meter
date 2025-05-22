@@ -41,6 +41,7 @@ void init_ADC(ADC_Type *ADC ,int);
 
 void invia_valore(unsigned short valore, char A);
 
+float rms(unsigned short*);
 //static float misura;
 
 #define NCampioni 400
@@ -49,8 +50,11 @@ void invia_valore(unsigned short valore, char A);
 int main(void){
 	unsigned char clear = 0;
 	unsigned int misura[NCampioni];
-	unsigned short tensione=0;
-	unsigned int corrente=0;
+	unsigned short tensione[NCampioni];
+	unsigned short corrente[NCampioni];
+	float rms_V = 0;
+	float rms_I = 0;
+
 
 
 	//Abilita il clock per GPIOA e GPIOE
@@ -131,7 +135,7 @@ int main(void){
 	//TIM4->ARR=399; //ARR con 400 campioni (20kHz)
 	TIM4->CEN=1;
 	while(1){	//Main loop
-			//clear = animazione_led(clear);
+		clear = animazione_led(clear);
 
 		usart_read();
 
@@ -150,12 +154,16 @@ int main(void){
 
 
 			for (int i=0; i<NCampioni;i++){ //Invia dati (da mettere in un if con lettura RX)
-				tensione = misura[i];  // channel on master
-				corrente = (misura[i]>>16); // channel on slave
-				invia_valore(tensione,'A'); //Invia campioni qui
-				invia_valore(corrente,'B');
+				tensione[i] = misura[i];  // channel on master
+				corrente[i] = (misura[i]>>16); // channel on slave
+				invia_valore(tensione[i],'A'); //Invia campioni qui
+				invia_valore(corrente[i],'B');
 			}
 
+			rms_V = rms(tensione); //Calcola rms tensione
+			rms_I = rms(corrente); //Calcola rms corrente
+			invia_valore((unsigned)rms_V,'C');
+			invia_valore((unsigned)rms_I,'D');
 	}//end while
 }//END MAIN
 
@@ -229,4 +237,21 @@ void invia_valore(unsigned short valore, char A){
 	usart_send(b);
 }
 
+float mean(unsigned short *valori){
+	float somma = 0;
+	for (int i = 0; i<NCampioni; i++){
+		somma += valori[i]; //Somma dei valori
+	}
+	return (somma/NCampioni); //Media
+}
+
+float rms(unsigned short *valori){
+	float mean(unsigned short*); //Definisci media
+	float media = mean(valori); //Calcola media
+	float quadrati=0; //Inizializza RMS
+	for (int i = 0; i<NCampioni; i++){
+		quadrati += pow(valori[i]-media,2); //Calcolo dei quadrati
+	}
+	return sqrtf(quadrati/NCampioni); //Ritorna radice quadrata
+}
 

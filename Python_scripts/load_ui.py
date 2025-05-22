@@ -85,7 +85,7 @@ class MainUI(QMainWindow):
         self.PlotWidget.addLegend()
         self.PlotWidget.plot(voltage,pen='r',name="Voltage")
         self.writeDataToFile(voltage)
-        #self.PlotWidget.plot(current,pen='b',name="Current")
+        self.PlotWidget.plot(current,pen='b',name="Current")
         self.PlotWidget.show()
 
 if __name__ == "__main__":
