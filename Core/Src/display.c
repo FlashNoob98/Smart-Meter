@@ -7,6 +7,7 @@
 #define D5 (GPIOD->ODR3)
 #define D6 (GPIOD->ODR4)
 #define D7 (GPIOD->ODR5)
+#define BL (GPIOD->ODR6) //backlight pin
 
 void send_to_lcd (char data, int rs)
 {
@@ -59,6 +60,7 @@ void lcd_send_data (char data)
 
 void init_lcd(){
 	GPIOD->MODER |= 0x555; //Da PD0 a PD5 in Write mode
+	GPIOD->MODER6 = 1; //Backlight pin output mode
 
     // 4 bit initialisation
     delay_ms(40);  // wait for >20ms attendi avvio del display
@@ -106,6 +108,14 @@ void lcd_clear (void)
 void lcd_send_string (char *str)
 {
 	while (*str) lcd_send_data (*str++);
+}
+
+void lcd_bl_on(void){
+	BL = 1;
+}
+
+void lcd_bl_off(void){
+	BL = 0;
 }
 
 void lcd_hello_world(void){

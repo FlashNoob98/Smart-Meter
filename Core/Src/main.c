@@ -160,8 +160,8 @@ int main(void){
 				invia_valore(corrente[i],'B');
 			}
 
-			rms_V = rms(tensione); //Calcola rms tensione
-			rms_I = rms(corrente); //Calcola rms corrente
+			rms_V = rms(tensione)*0.413560; //Calcola rms tensione
+			rms_I = rms(corrente)*0.020570; //Calcola rms corrente
 			invia_valore((unsigned)rms_V,'C');
 			invia_valore((unsigned)rms_I,'D');
 	}//end while

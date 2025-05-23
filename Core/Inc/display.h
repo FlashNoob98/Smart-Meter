@@ -19,4 +19,8 @@ void lcd_clear (void);
 
 void lcd_hello_world(void);
 
+void lcd_bl_on(void);
+
+void lcd_bl_off(void);
+
 #endif /* INC_display_H_ */

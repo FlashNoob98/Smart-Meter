@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>866</width>
-    <height>602</height>
+    <width>1327</width>
+    <height>978</height>
    </rect>
   </property>
   <property name="font">
@@ -45,7 +45,7 @@
              <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeType">
-             <enum>QSizePolicy::Policy::Maximum</enum>
+             <enum>QSizePolicy::Policy::Minimum</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -104,6 +104,9 @@
             <property name="orientation">
              <enum>Qt::Orientation::Horizontal</enum>
             </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Policy::Minimum</enum>
+            </property>
             <property name="sizeHint" stdset="0">
              <size>
               <width>40</width>
@@ -161,6 +164,22 @@
              <bool>false</bool>
             </property>
            </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_7">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Policy::Minimum</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>80</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
           <item>
            <spacer name="horizontalSpacer_3">
@@ -529,7 +548,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>866</width>
+     <width>1327</width>
      <height>33</height>
     </rect>
    </property>
