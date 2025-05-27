@@ -9,6 +9,4 @@ void delay_us(int);
 
 void delay_ms(int);
 
-void delay_us2(int);
-
 #endif /* INC_timers_H_ */
