@@ -22,6 +22,7 @@ void init_ADC(ADC_Type *,int);
 
 void invia_valore(unsigned short, char);
 float mean(unsigned short*); //Definisci media
+
 float rms(unsigned short*);
 
 //static float misura;
@@ -39,6 +40,8 @@ int main(void){
 	float rms_V = 0;
 	float rms_I = 0;
     float P_A=0;
+
+
 
 	//Abilita il clock per GPIOA e GPIOE
 	//RCC->AHBENR|=GPIOAEN|GPIOEEN; //Enable GPIOE e GPIOA
@@ -119,6 +122,12 @@ int main(void){
 		clear = animazione_led(clear);
 
 		usart_read();
+		//lcd_bl_on();
+		//while(USER_BTN==0);
+		//while(USER_BTN==1);
+		//lcd_bl_off();
+		//while(USER_BTN==0);
+		//while(USER_BTN==1);
 
 			for (int i=0; i<NCampioni;i++){ //Acquisisci campioni
 
@@ -137,14 +146,18 @@ int main(void){
 			for (int i=0; i<NCampioni;i++){ //Invia dati (da mettere in un if con lettura RX)
 				tensione[i] = misura[i];  // channel on master
 				corrente[i] = (misura[i]>>16); // channel on slave
-				invia_valore(tensione[i],'A'); //Invia campioni qui
-				invia_valore(corrente[i],'B');
+
+			}
+
+			for (int i=0; i<NCampioni;i++){
+				invia_valore(round((tensione[i])*Gain_V),'A'); //Invia campioni qui
+				invia_valore(round((corrente[i])*Gain_I),'B');
 			}
 
 			rms_V = rms(tensione)*Gain_V; //Calcola rms tensione
-			//rms_I = rms(corrente)*0.020570; //Calcola rms corrente
 			rms_I = rms(corrente)*Gain_I;
 			P_A=potenza_attiva(tensione,corrente);
+
 			invia_valore((unsigned)rms_V,'C');
 			invia_valore((unsigned)rms_I,'D');
 			invia_valore((unsigned)P_A,'E');
