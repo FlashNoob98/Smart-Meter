@@ -67,6 +67,11 @@ class MainUI(QMainWindow):
                 #serial.read()
                 serial.read()
                 self.plot(serial.sommaV, serial.sommaI)
+                self.vrmsLineEdit.setText(str(serial.RMS_V))
+                self.irmsLineEdit.setText(str(serial.RMS_I))
+                self.pLineEdit.setText(str(serial.P_A))
+                self.qLineEdit.setText(str(serial.Q))
+                self.sLineEdit.setText(str(serial.S))
             except Exception as e:
                 QMessageBox.warning(self,"Serial Error",str(e))
 

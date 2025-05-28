@@ -69,15 +69,36 @@ class Serial_reader():
                         #print(line[index+1])  
                         #print(line[index+2]) #post
                         #print(line[index+3]) #pre
-                        RMS_V = self.rearrange_single(line[index+3],line[index+2])
-                        print("V_rms = " + str(RMS_V) + " V")     
+                        self.RMS_V = self.rearrange_single(line[index+3],line[index+2])
+                        print("V_rms = " + str(self.RMS_V) + " V")     
                     elif(line[index+1]==68): #68=D RMS I
                         #print("D")   
                         #print(line[index+1])  
                         #print(line[index+2]) #post
                         #print(line[index+3]) #pre
-                        RMS_I = self.rearrange_single(line[index+3],line[index+2])
-                        print("I_rms = "+ str(RMS_I) + " A")  
+                        self.RMS_I = self.rearrange_single(line[index+3],line[index+2])
+                        print("I_rms = "+ str(self.RMS_I) + " A")  
+                    elif(line[index+1]==69): #69=E PAttiva
+                        #print("D")   
+                        #print(line[index+1])  
+                        #print(line[index+2]) #post
+                        #print(line[index+3]) #pre
+                        self.P_A = self.rearrange_single(line[index+3],line[index+2])
+                        print("P_a = "+ str(self.P_A) + " W")  
+                    elif(line[index+1]==70): #70=F Q p reattiva
+                        #print("D")   
+                        #print(line[index+1])  
+                        #print(line[index+2]) #post
+                        #print(line[index+3]) #pre
+                        self.Q = self.rearrange_single(line[index+3],line[index+2])
+                        print("P_a = "+ str(self.Q) + " VAr") 
+                    elif(line[index+1]==71): #71=G S p apparente
+                        #print("D")   
+                        #print(line[index+1])  
+                        #print(line[index+2]) #post
+                        #print(line[index+3]) #pre
+                        self.S = self.rearrange_single(line[index+3],line[index+2])
+                        print("P_a = "+ str(self.S) + " VA") 
                 
         #print(line)
 

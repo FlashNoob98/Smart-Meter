@@ -3,6 +3,7 @@
 #include <display.h>
 #include <timers.h>
 #include <usart.h>
+#include <stdio.h>
 
 
 //#define PI 3.14159265358
@@ -20,6 +21,8 @@ unsigned char animazione_led(unsigned char);
 
 void init_ADC(ADC_Type *,int);
 
+void esegui_misura(unsigned int *misura, unsigned short *tensione, unsigned short *corrente, float *rms_V, float *rms_I, float *P_A, float *S, float *Q);
+
 void invia_valore(unsigned short, char);
 float mean(unsigned short*); //Definisci media
 
@@ -27,6 +30,10 @@ float rms(unsigned short*);
 
 //static float misura;
 float potenza_attiva(unsigned short *,unsigned short *);
+
+void misura_a_display(float rms_V, float rms_I, float P_A, float Q, float S,float Energy,unsigned int secondi);
+
+void invia_uart(unsigned short *tensione,unsigned short *corrente, float rms_V, float rms_I, float P_A, float Q,float S);
 
 #define NCampioni 400
 #define Gain_V 0.413560
@@ -40,7 +47,11 @@ int main(void){
 	float rms_V = 0;
 	float rms_I = 0;
     float P_A=0;
-
+    float Q=0;
+    float S=0;
+    float Energy=0;
+    unsigned int secondix10=0;
+    unsigned int secondi = 0; // Overflow dopo 136 anni
 
 
 	//Abilita il clock per GPIOA e GPIOE
@@ -89,17 +100,17 @@ int main(void){
 
 	lcd_hello_world();
 
+	delay_ms(2000); //Attendi 2 secondi..
+	//unsigned int y[NCampioni];
+	//float x = 0.0;
+	//float dx = (float)(2*M_PI/NCampioni);
 
-	unsigned int y[NCampioni];
-	float x = 0.0;
-	float dx = (float)(2*M_PI/NCampioni);
-
-	for (int i=0; i<NCampioni; i++){
-		y[i] = (unsigned int)(2048+(2047*sinf(x)));
+	//for (int i=0; i<NCampioni; i++){
+		//y[i] = (unsigned int)(2048+(2047*sinf(x)));
 		//y[i] = 4094;
-		x = x + dx;
+		//x = x + dx;
 		//DAC1->DACC1DHRR1 = y[i];
-	}//END FOR
+	//}//END FOR
 
 	// Attendi 10 us - superfluo ho i wait del display
 //	while(TIM4->UIF){ //Verifica quando avviene l'overflow (500ms)
@@ -118,51 +129,27 @@ int main(void){
 	TIM4->ARR=799; //ARR 200 campioni (10kHz)
 	//TIM4->ARR=399; //ARR con 400 campioni (20kHz)
 	TIM4->CEN=1;
+
+
 	while(1){	//Main loop
+
+		secondi += check_one_sec(); //Aggiungi un secondo
+		secondix10 += check_ten_sec(); //Aggiungi 10 secondi
+
+		esegui_misura(misura,tensione,corrente, &rms_V, &rms_I, &P_A, &S, &Q);
+
+		if(secondix10){
+			Energy += P_A*10/3600/1000; //Accumula energia
+		}
+
 		clear = animazione_led(clear);
 
-		usart_read();
-		//lcd_bl_on();
-		//while(USER_BTN==0);
-		//while(USER_BTN==1);
-		//lcd_bl_off();
-		//while(USER_BTN==0);
-		//while(USER_BTN==1);
+		//usart_read();
 
-			for (int i=0; i<NCampioni;i++){ //Acquisisci campioni
+		misura_a_display(rms_V,rms_I,P_A,Q,S,Energy,secondi);
 
-				DAC1->DACC1DHRR1 = y[i];
-				//delay_us((int)200);
-				while(TIM4->UIF==0);
-				ADC1->ADSTART=1; //Inizia conversione (è il master ad avviare la conversione)
-				TIM4->UIF=0;
-				while (ADC1->EOC!=1); //Attendi fine conversione (sempre del master)
-			    //misura = (float)(ADC2->RDATA)/4096*3.3; //Leggi data register
-				//misura = ADC2->RDATA; //Acquisisci dato
-				misura[i] = ADC12->CDR;
-			}
+		invia_uart(tensione,corrente,rms_V,rms_I,P_A,Q,S);
 
-
-			for (int i=0; i<NCampioni;i++){ //Invia dati (da mettere in un if con lettura RX)
-				tensione[i] = misura[i];  // channel on master
-				corrente[i] = (misura[i]>>16); // channel on slave
-
-			}
-
-			for (int i=0; i<NCampioni;i++){
-				invia_valore(round((tensione[i])*Gain_V),'A'); //Invia campioni qui
-				invia_valore(round((corrente[i])*Gain_I),'B');
-			}
-
-			rms_V = rms(tensione)*Gain_V; //Calcola rms tensione
-			rms_I = rms(corrente)*Gain_I;
-			P_A=potenza_attiva(tensione,corrente);
-
-			invia_valore((unsigned)rms_V,'C');
-			invia_valore((unsigned)rms_I,'D');
-			invia_valore((unsigned)P_A,'E');
-
-			//S=rms_V*rmsI;
 
 	}//end while
 }//END MAIN
@@ -172,12 +159,12 @@ unsigned char animazione_led(unsigned char clear){
 	LED_8 = 1; //Accendi LED 8
 	//while(!USER_BTN){
 		//GPIOE->ODR = (GPIOE->ODR)+(1<<8); Messo qui mostra una combinazione "casuale" ogni volta che trattieni il tasto
-	if(TIM4->UIF){ //Verifica quando avviene l'overflow
+	//if(TIM4->UIF){ //Verifica quando avviene l'overflow
 		if (clear){
 			GPIOE->ODR|=0x0080; //Riparti dal led 7 (Solo animazione orologio
 			GPIOE->ODR=0; //Spegni tutto (Entrambe le animazioni o solo accumulo)
 			clear = 0;
-		}
+		//}
 		//TIM4->UIF = 0; //Reimposta UIF ovvero accetta evento di overflow
 		//LED_8 ^= 1; //Commuta LED 8
 		GPIOE->ODR = ((GPIOE->ODR)<<1); //ANIMAZIONE "orologio"
@@ -224,6 +211,28 @@ void init_ADC(ADC_Type *ADC, int channel){
 
 }
 
+
+void esegui_misura(unsigned int *misura, unsigned short *tensione, unsigned short *corrente, float *rms_V, float *rms_I, float *P_A, float *S, float *Q){
+	//unsigned int misura[]=0;
+	for (int i=0; i<NCampioni;i++){ //Acquisisci campioni
+		//DAC1->DACC1DHRR1 = y[i];
+		while(TIM4->UIF==0);
+		ADC1->ADSTART=1; //Inizia conversione (è il master ad avviare la conversione)
+		TIM4->UIF=0;
+		while (ADC1->EOC!=1); //Attendi fine conversione (sempre del master)
+		misura[i] = ADC12->CDR;
+	}
+	for (int i=0; i<NCampioni;i++){ //Invia dati (da mettere in un if con lettura RX)
+		tensione[i] = misura[i];  // channel on master
+		corrente[i] = (misura[i]>>16); // channel on slave
+	}
+	*rms_V = rms(tensione)*Gain_V; //Calcola rms tensione
+	*rms_I = rms(corrente)*Gain_I;
+	*P_A=potenza_attiva(tensione,corrente);
+	*S = (*rms_V)*(*rms_I); //Potenza apparente
+	*Q = (*S)-(*P_A); //Potenza reattiva
+}
+
 void invia_valore(unsigned short valore, char A){
 	char a;
 	char b;
@@ -267,6 +276,33 @@ float potenza_attiva(unsigned short *tensione,unsigned short *corrente){
 			P_ist += v_0[i]*i_0[i];
 		}
 	   return P_ist/NCampioni;
+}
+
+void misura_a_display(float rms_V, float rms_I, float P_A, float Q, float S,float Energy,unsigned int secondi){
+	char buffer[32];
+	lcd_clear();
+	lcd_put_cur(1,0);
+	snprintf(buffer,sizeof(buffer),"P:%3.1fW Q:%3.1fVar",P_A,Q);
+	lcd_send_string(buffer);
+	lcd_put_cur(2,0);
+	snprintf(buffer,sizeof(buffer),"S:%3.1fVA E:%3.1fVar",S,Energy);
+	lcd_send_string(buffer);
+	lcd_put_cur(3,0);
+	snprintf(buffer,sizeof(buffer),"Uptime: %02dG %02d:%02d:%02d",(int)(secondi/86400),(int)(secondi%86400/3600),(int)((secondi%3600)/60),(int)(secondi%60));
+	lcd_send_string(buffer);
+}
+
+void invia_uart(unsigned short *tensione,unsigned short *corrente, float rms_V, float rms_I, float P_A, float Q,float S){
+	for (int i=0; i<NCampioni;i++){
+		invia_valore(round((tensione[i])*Gain_V),'A'); //Invia campioni qui
+		invia_valore(round((corrente[i])*Gain_I),'B');
+	}
+	invia_valore((unsigned)rms_V,'C');
+	invia_valore((unsigned)rms_I,'D');
+	invia_valore((unsigned)P_A,'E');
+	invia_valore((unsigned)Q,'F');
+	invia_valore((unsigned)S,'G');
+
 }
 
 

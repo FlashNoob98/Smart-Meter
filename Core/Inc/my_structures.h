@@ -185,7 +185,7 @@ typedef struct GPIO{//GPIO Type
 		unsigned int BRR;
 }GPIO_Type;
 
-typedef struct TIMER{
+typedef struct TIMER_GP{
 	union{ //CR1
 		unsigned int CR1;
 		struct {
@@ -265,6 +265,60 @@ typedef struct TIMER{
 	unsigned int DCR;
 	unsigned int DMAR;
 }GP_TIMER_Type;
+
+typedef struct TIMER_BASIC{
+	union{ //CR1
+		unsigned int CR1;
+		struct {
+			unsigned CEN:1;
+			unsigned UDIS:1;
+			unsigned URS:1;
+			unsigned OPM:1;
+			unsigned res0:3;
+			unsigned ARPE:1;
+			unsigned RES0:3;
+			unsigned UIFREMA:1;
+			unsigned RES2:20;
+		};//Struct Cr1
+	};//Union Cr1
+	unsigned int CR2;
+	unsigned int res2;
+	union{ //DIER
+		unsigned int DIER;
+		struct{
+			unsigned UIE:1;
+			unsigned res3:7;
+			unsigned UDE:1;
+			unsigned res_4:23;
+		};
+	};
+	union{ //SR
+		unsigned int SR;
+		struct{
+			unsigned UIF:1;
+			unsigned res_8:31;
+		};//Struct SR
+	};//UNION SR
+	union{ //Union EGR
+		unsigned int EGR;
+		struct{
+			unsigned UG:1;
+			unsigned res_9:31;
+		};
+	};
+	unsigned int RES4;
+	unsigned int RES5;
+	union{
+		unsigned int CNTx;
+		struct{
+			unsigned CNT:16;
+			unsigned res_10:15;
+			unsigned UIFCPY:1;
+		};
+	};
+	unsigned int PSC;
+	unsigned int ARR;
+}BASIC_TIMER_Type; //Timer 6 e timer 7
 
 typedef struct ADC{
 	union{ //ISR
@@ -892,6 +946,8 @@ typedef struct USART{
 #define TIM2 ((GP_TIMER_Type*) 0x40000000) //Indirizzo base timer 2
 #define TIM3 ((GP_TIMER_Type*) 0x40000400) //Indirizzo base timer 3
 #define TIM4 ((GP_TIMER_Type*) 0x40000800) //Indirizzo timer 4
+#define TIM6 ((BASIC_TIMER_Type*) 0x40001000) //Indirizzo Timer 6
+#define TIM7 ((BASIC_TIMER_Type*) 0x40001400) //Indirizzo base timer 7
 
 #define ADC1 ((ADC_Type*) 0x50000000) //Indirizzo base ADC1
 #define ADC2 ((ADC_Type*) 0x50000100) //Indirizzo base ADC2
