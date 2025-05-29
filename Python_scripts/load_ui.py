@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt6.uic import loadUi
 from read_serial import Serial_reader
 import pyqtgraph as pg
+import GUI.logo #Importa logo
 
 
 
@@ -24,9 +25,9 @@ class MainUI(QMainWindow):
 
         # Graph init
         self.PlotWidget.setBackground('w')
-        self.PlotWidget.setTitle("Serial Data")
-        self.PlotWidget.setLabel('left', 'Y-Axis')
-        self.PlotWidget.setLabel('bottom', 'X-Axis')
+        self.PlotWidget.setTitle("Dati ADC")
+        self.PlotWidget.setLabel('left', 'Campioni')
+        self.PlotWidget.setLabel('bottom', 'n')
         self.PlotWidget.showGrid(x=True, y=True)
 
         

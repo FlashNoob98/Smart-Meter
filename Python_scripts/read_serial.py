@@ -49,7 +49,7 @@ class Serial_reader():
 
     def read(self):
         self.ser.write('A'.encode('utf-8')) #A
-        line = self.ser.read(self.count*8+18)
+        line = self.ser.read(self.count*8+24)
         #print(line)
         for index in range(len(line)-3):
             #print(line[index])
@@ -91,14 +91,14 @@ class Serial_reader():
                         #print(line[index+2]) #post
                         #print(line[index+3]) #pre
                         self.Q = self.rearrange_single(line[index+3],line[index+2])
-                        print("P_a = "+ str(self.Q) + " VAr") 
+                        print("Q = "+ str(self.Q) + " VAr") 
                     elif(line[index+1]==71): #71=G S p apparente
                         #print("D")   
                         #print(line[index+1])  
                         #print(line[index+2]) #post
                         #print(line[index+3]) #pre
                         self.S = self.rearrange_single(line[index+3],line[index+2])
-                        print("P_a = "+ str(self.S) + " VA") 
+                        print("S = "+ str(self.S) + " VA") 
                     elif(line[index+1]==72): #72=H Energia
                         #print("D")   
                         #print(line[index+1])  
