@@ -31,7 +31,7 @@ void invia_uart(unsigned short *tensione,unsigned short *corrente, float rms_V, 
 #define NCampioni 400 //Campioni da acquisire ad ogni loop
 #define Gain_V 0.413560 //Guadagno trasduttore di tensione (RMS)
 #define Gain_I 0.030623 //Guadagno trasduttore corrente (RMS)
-#define display_time 15 //Secondi accensione display
+#define display_time 14 //Secondi accensione display
 
 int main(void){
 	unsigned char clear = 0; //variabile per azzerare animazione LED

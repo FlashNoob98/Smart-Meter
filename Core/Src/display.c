@@ -13,13 +13,16 @@
 
 void send_to_lcd (char data, int rs){
 	//Dati sul bus
-	RS = rs;
-	D7 = ((data>>3)&(0x01));
-	D6 = ((data>>2)&(0x01));
-	D5 = ((data>>1)&(0x01));
-	D4 = ((data>>0)&(0x01));
+	//D7 = ((data>>3)&(0x01));
+	//D6 = ((data>>2)&(0x01));
+	//D5 = ((data>>1)&(0x01));
+	//D4 = ((data>>0)&(0x01));
+	GPIOD->ODR &= (0x40); // Azzera bit dati, maschera 1000000 (mantiene stato BL)
+	GPIOD->ODR |= (data<<2); //Scrivi dato nell'ODR
+
+	RS = rs; //Comando o carattere?
 	//Impulsa E
-	E = 0;
+	//E = 0;
 	delay_us(1);
 	E = 1;
 	delay_us(1);
