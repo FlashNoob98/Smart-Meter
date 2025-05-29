@@ -158,7 +158,7 @@
              <enum>Qt::LayoutDirection::LeftToRight</enum>
             </property>
             <property name="text">
-             <string>9600</string>
+             <string>57600</string>
             </property>
             <property name="dragEnabled">
              <bool>false</bool>

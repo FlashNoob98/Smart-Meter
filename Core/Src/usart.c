@@ -6,6 +6,6 @@ void usart_send(unsigned int data){
 }
 
 char usart_read(){
-	while((USART1->RXNE==0));
+	if((USART1->RXNE==1));
 	return USART1->RDR;
 }

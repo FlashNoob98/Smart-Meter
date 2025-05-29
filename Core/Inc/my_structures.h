@@ -308,6 +308,7 @@ typedef struct TIMER_BASIC{
 	};
 	unsigned int RES4;
 	unsigned int RES5;
+	unsigned int RES6;
 	union{
 		unsigned int CNTx;
 		struct{
@@ -959,8 +960,6 @@ typedef struct USART{
 
 #define LED_8 (GPIOE->ODR8)
 #define USER_BTN (GPIOA->IDR0)
-
-
 
 
 #endif /* SRC_MY_STRUCTURES_H_ */

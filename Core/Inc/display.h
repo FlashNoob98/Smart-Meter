@@ -1,6 +1,5 @@
 #include <my_structures.h>
 
-
 #ifndef INC_display_H_
 #define INC_fisplay_H_
 
