@@ -18,7 +18,7 @@ void send_to_lcd (char data, int rs){
 	//D5 = ((data>>1)&(0x01));
 	//D4 = ((data>>0)&(0x01));
 	GPIOD->ODR &= (0x40); // Azzera bit dati, maschera 1000000 (mantiene stato BL)
-	GPIOD->ODR |= (data<<2); //Scrivi dato nell'ODR
+	GPIOD->ODR |= ((data&(0xF))<<2); //Scrivi dato nell'ODR
 
 	RS = rs; //Comando o carattere?
 	//Impulsa E
@@ -27,7 +27,7 @@ void send_to_lcd (char data, int rs){
 	E = 1;
 	delay_us(1);
 	E = 0;
-	delay_us(100); //Attendi per il prossimo carattere/comando
+	delay_us(20); //Attendi per il prossimo carattere/comando
 };
 
 void lcd_send_cmd (char cmd){
@@ -35,12 +35,12 @@ void lcd_send_cmd (char cmd){
     //Invia bit più significativi
     datatosend = ((cmd>>4)&0x0f);
     send_to_lcd(datatosend,0);  // RS=0 per inviare comandi
-    delay_us(5);
+    //delay_us(5);
 
     // Invia bit meno significativi
     datatosend = ((cmd)&0x0f);
     send_to_lcd(datatosend, 0);
-    delay_us(4500); //Attendi 4.1ms tra un comando e l'altro
+   // delay_us(200); //Attendi 4.1ms tra un comando e l'altro
 }
 
 void lcd_send_data (char data){
@@ -48,7 +48,7 @@ void lcd_send_data (char data){
     //Invia bit più significativi
     datatosend = ((data>>4)&0x0f);
     send_to_lcd(datatosend, 1);  // rs =1 per inviare dati e non comandi
-    delay_us(5);
+    //delay_us(5);
     // Invia bit meno significativi
     datatosend = ((data)&0x0f);
     send_to_lcd(datatosend, 1);
@@ -105,8 +105,8 @@ void lcd_send_string (char *str){
 }
 
 void lcd_bl_on(void){
-	BL = 1; //Attiva retroilluminazione
 	lcd_send_cmd(0x0C); //Attiva LCD
+	BL = 1; //Attiva retroilluminazione
 }
 
 void lcd_bl_off(void){
