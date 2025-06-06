@@ -504,21 +504,21 @@
             <item>
              <widget class="QLabel" name="label_10">
               <property name="text">
-               <string>kW</string>
+               <string>W</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="label_8">
               <property name="text">
-               <string>kVAr</string>
+               <string>VAr</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="label_9">
               <property name="text">
-               <string>kVA</string>
+               <string>VA</string>
               </property>
              </widget>
             </item>

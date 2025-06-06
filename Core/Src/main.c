@@ -14,7 +14,7 @@ unsigned char animazione_led(unsigned char);
 
 void init_ADC(ADC_Type *,int);
 
-void esegui_misura(unsigned int *misura, unsigned short *tensione, unsigned short *corrente, float *rms_V, float *rms_I, float *P_A, float *S, float *Q, unsigned int *);
+void esegui_misura(unsigned int *misura, unsigned short *tensione, unsigned short *corrente, float *rms_V, float *rms_I, float *P_A, float *S, float *Q);
 
 void invia_valore(unsigned short, char);
 
@@ -29,11 +29,13 @@ void misura_a_display(float rms_V, float rms_I, float P_A, float Q, float S,floa
 void invia_uart(unsigned short *tensione,unsigned short *corrente, float rms_V, float rms_I, float P_A, float Q,float S,float Energy);
 
 #define NCampioni 400 //Campioni da acquisire ad ogni loop
-#define Gain_V 0.413560 //Guadagno trasduttore di tensione (RMS)
-#define Gain_I 0.030623 //Guadagno trasduttore corrente (RMS)
-#define display_time 14 //Secondi accensione display
+#define Gain_V 0.555431 //Guadagno trasduttore di tensione (RMS)
+//#define Gain_I 0.030623
+#define Gain_I 0.017340//Guadagno trasduttore corrente (RMS)
+#define display_time 24000 //Secondi accensione display
 
 int main(void){
+	*SCB |= CP11|CP10;
 	unsigned char clear = 0; //variabile per azzerare animazione LED
 	unsigned int misura[NCampioni]; //Array campioni acquisiti
 	unsigned short tensione[NCampioni]; //array campioni tensione
@@ -79,14 +81,6 @@ int main(void){
 	ADC12->DUAL = 0b00110; //Modalità sincrona degli ADC
 
 
-	//Configurazione DAC (superfluo)
-	GPIOA->MODER4 = Analog; //DAC metti pin 4 in modalità analogica
-	RCC->DAC1EN=1; //Abilita il DAC
-	DAC1->DACC1DHRR1 = 2048; //Valore iniziale
-	DAC1->EN1=1; //EN1 Abilita canale 1 Dac 1
-	DAC1->BOFF1=1; //Disabilitazione buffer (carico alta impedenza)
-
-
 	//Abilita LED per animazione
 	RCC->GPIOEEN = 1; //Enable GPIOE
 	GPIOE->MODER = 0x55550000; //led output da 8 a 15
@@ -99,22 +93,9 @@ int main(void){
 	lcd_hello_world(); //Schermata benvenuto
 	delay_ms(2000); //Attendi 2 secondi..
 
-	//Dac genera sinusoide (superfluo)
-	unsigned int y[NCampioni];
-	float x = 0.0;
-	float dx = (float)(2*M_PI/NCampioni);
-
-	for (int i=0; i<NCampioni; i++){
-		y[i] = (unsigned int)(2048+(2047*sinf(x)));
-		//y[i] = 4094;
-		x = x + dx;
-		DAC1->DACC1DHRR1 = y[i];
-	}//END FOR
-
 
 	init_ADC(ADC1,2); //Inizializza e calibra ADC1 canale 2 (PA1)
 	init_ADC(ADC2,2); //Inizializza e calibra ADC2 canale 2 (PA5)
-
 
 	// Configurazione ARR per frequenza di campionamento ADC
 	//TIM4->ARR=1125;
@@ -128,11 +109,11 @@ int main(void){
 
 	while(1){	//Main loop
 
-		esegui_misura(misura,tensione,corrente, &rms_V, &rms_I, &P_A, &S, &Q,y); //Esegui le misure
+		esegui_misura(misura,tensione,corrente, &rms_V, &rms_I, &P_A, &S, &Q); //Esegui le misure
 
 		if(check_ten_sec()){ //Se sono passati 10 secondi
 			secondix10 += 1; //Aggiungi 10 secondi (superfluo?)
-			Energy += P_A*10/3600/1000; //Accumula energia
+			Energy += P_A*10/3600; //Accumula energia
 		}
 
 		if(USER_BTN){ //polling del tasto user per accendere LCD
@@ -155,7 +136,7 @@ int main(void){
 		}
 
 		if(usart_read()){ //Polling UART RX
-			invia_uart(tensione,corrente,rms_V*10,rms_I*100,P_A,Q,S,Energy*1000); //Invia i campioni
+			invia_uart(tensione,corrente,rms_V,rms_I,P_A,Q,S,Energy); //Invia i campioni
 		}
 
 	}//end while
@@ -209,9 +190,8 @@ void init_ADC(ADC_Type *ADC, int channel){
 }
 
 
-void esegui_misura(unsigned int *misura, unsigned short *tensione, unsigned short *corrente, float *rms_V, float *rms_I, float *P_A, float *S, float *Q, unsigned int *y){
+void esegui_misura(unsigned int *misura, unsigned short *tensione, unsigned short *corrente, float *rms_V, float *rms_I, float *P_A, float *S, float *Q){
 	for (int i=0; i<NCampioni;i++){ //Acquisisci campioni
-		DAC1->DACC1DHRR1 = y[i]; //Aggiorna il DAC (superfluo)
 		while(TIM4->UIF==0); //Attendi overflow timer per campionamento a frequenza costante
 		ADC1->ADSTART=1; //Inizia conversione (è il master ad avviare la conversione)
 		TIM4->UIF=0; //Abbassa bit overflow timer 4
@@ -252,7 +232,8 @@ float rms(unsigned short *valori){ //Funzione rms
 	float media = mean(valori); //Ottieni media
 	float quadrati=0; //Inizializza RMS
 	for (int i = 0; i<NCampioni; i++){
-		quadrati += pow(valori[i]-media,2); //Calcolo dei quadrati
+		float diff = (valori[i]-media);
+		quadrati += diff*diff; //Calcolo dei quadrati
 	}
 	return sqrtf(quadrati/NCampioni); //Ritorna radice quadrata
 }
@@ -265,26 +246,33 @@ float potenza_attiva(unsigned short *tensione,unsigned short *corrente){ //Calco
 	float P_ist = 0.0;
 	for (int i = 0; i<NCampioni; i++){
 			v_0[i] = (tensione[i]-media_v)*Gain_V; //Calcolo media
-			i_0[i] = (corrente[i]-media_i)*Gain_I;
+			i_0[i] = (-corrente[i]-media_i)*Gain_I;
 			P_ist += v_0[i]*i_0[i];
 		}
-	   return P_ist/NCampioni;
+	   return (P_ist/NCampioni);
 }
 
 void misura_a_display(float rms_V, float rms_I, float P_A, float Q, float S,float Energy,unsigned int secondi){
 	char buffer[32]; //Inizializza un buffer per costruire la stringa
 
+	lcd_put_cur(0,0);
+	snprintf(buffer,sizeof(buffer),"V:%3.1fV",rms_V); //costruisci potenza attiva
+	lcd_send_string(buffer); //Invia
+	lcd_put_cur(0,10);
+	snprintf(buffer,sizeof(buffer),"I:%3.1fA",rms_I); //costruisci potenza attiva
+	lcd_send_string(buffer); //Invia
+
 	lcd_put_cur(1,0); //Cursore seconda riga prima colonna
-	snprintf(buffer,sizeof(buffer),"P:%3.1fkW",P_A/1000); //costruisci potenza attiva
+	snprintf(buffer,sizeof(buffer),"P:%3.1fW",P_A); //costruisci potenza attiva
 	lcd_send_string(buffer); //Invia
 	lcd_put_cur(1,10); //Seconda riga decima colonnta
-	snprintf(buffer,sizeof(buffer),"Q:%3.1fkVar",Q/1000); //Potenza reattiva
+	snprintf(buffer,sizeof(buffer),"Q:%3.1fVar",Q); //Potenza reattiva
 	lcd_send_string(buffer); //Invia
 	lcd_put_cur(0,20); //Display 4x20, in posizione 20 si trasla di due righe, dunque terza riga, (due rispetto alla prima) prima colonna
-	snprintf(buffer,sizeof(buffer),"S:%3.1fkVA",S/1000); //Potenza apparente
+	snprintf(buffer,sizeof(buffer),"S:%3.1fVA",S); //Potenza apparente
 	lcd_send_string(buffer); //Invia
-	lcd_put_cur(0,30); // terza riga decima colonna
-	snprintf(buffer,sizeof(buffer),"E:%3.1fkWh",Energy); //Enrgia
+	lcd_put_cur(0,31); // terza riga undicesima colonna
+	snprintf(buffer,sizeof(buffer),"E:%3.1fWh",Energy); //Enrgia
 	lcd_send_string(buffer); //Invia
 	lcd_put_cur(1,20); //Ultima riga prima colonna (riga 2 più 2)
 	snprintf(buffer,sizeof(buffer),"Uptime: %02dG %02d:%02d:%02d",(int)(secondi/86400),(int)(secondi%86400/3600),(int)((secondi%3600)/60),(int)(secondi%60)); //Calcolo uptime
@@ -293,8 +281,8 @@ void misura_a_display(float rms_V, float rms_I, float P_A, float Q, float S,floa
 
 void invia_uart(unsigned short *tensione,unsigned short *corrente, float rms_V, float rms_I, float P_A, float Q,float S,float Energy){
 	for (int i=0; i<NCampioni;i++){
-		invia_valore(round((tensione[i])*Gain_V),'A'); //Invia campione tensione
-		invia_valore(round((corrente[i])*Gain_I),'B'); //Invia campione corrente
+		invia_valore(round((tensione[i])),'A'); //Invia campione tensione
+		invia_valore(round((corrente[i])),'B'); //Invia campione corrente
 	}
 	// Invia le altre misure con i rispettivi header
 	invia_valore((unsigned)rms_V,'C');

@@ -56,14 +56,14 @@ class Serial_reader():
             if (line[index] == 255):
                 #print("255")
                     if(line[index+1]==65): #65=A
-                        self.post.append(bin(line[index+2]))                 
-                        self.pre.append(bin(line[index+3]))
+                        self.post.append(bin(round(line[index+2])))                 
+                        self.pre.append(bin(round(line[index+3])))
                         self.counter = self.counter+1
                     elif(line[index+1]==66): #66=B
                         if self.counter==0: #Previeni offset due misure
                             continue
-                        self.postI.append(bin(line[index+2]))                 
-                        self.preI.append(bin(line[index+3]))   
+                        self.postI.append(bin(round(line[index+2])))                 
+                        self.preI.append(bin(round(line[index+3])))   
                     elif(line[index+1]==67): #67=C RMS V
                         #print("C")   
                         #print(line[index+1])  

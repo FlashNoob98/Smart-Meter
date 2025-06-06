@@ -961,5 +961,9 @@ typedef struct USART{
 #define LED_8 (GPIOE->ODR8)
 #define USER_BTN (GPIOA->IDR0)
 
+#define SCB ((unsigned int*) 0xE000ED88)
+#define CP11 (3<<22)
+#define CP10 (3<<20)
+
 
 #endif /* SRC_MY_STRUCTURES_H_ */
